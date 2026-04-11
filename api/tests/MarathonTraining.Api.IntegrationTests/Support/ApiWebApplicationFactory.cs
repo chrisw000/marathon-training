@@ -1,6 +1,7 @@
 using MarathonTraining.Application.Strava;
 using MarathonTraining.Infrastructure.Persistence;
 using MarathonTraining.Infrastructure.Strava;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -10,15 +11,19 @@ using Microsoft.Extensions.DependencyInjection;
 namespace MarathonTraining.Api.IntegrationTests.Support;
 
 /// <summary>
-/// Hosts the API in-process for integration tests. Replaces two registrations:
+/// Hosts the API in-process for integration tests. Replaces three registrations:
 /// <list type="bullet">
 ///   <item>
-///     <see cref="AppDbContext"/> — redirected to the Testcontainer SQL Server so tests
-///     run against a real, isolated database without touching production data.
+///     <see cref="AppDbContext"/> — redirected to the Testcontainer SQL Server.
 ///   </item>
 ///   <item>
 ///     <see cref="IStravaTokenService"/> HttpClient — base address redirected to the
 ///     WireMock server so Strava token exchange is intercepted without real network calls.
+///   </item>
+///   <item>
+///     JWT Bearer authentication — replaced with <see cref="FakeAuthHandler"/> so tests
+///     can authenticate by setting the <c>X-Test-User-Id</c> request header rather than
+///     generating real JWTs. Anonymous endpoints are unaffected.
 ///   </item>
 /// </list>
 /// </summary>
@@ -29,7 +34,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 
     /// <param name="stravaBaseUrl">
     ///   Base URL of the WireMock server that will handle <c>POST /oauth/token</c> calls.
-    ///   A trailing slash is added if absent.
+    ///   Pass any valid URL for tests that do not exercise the Strava token exchange.
     /// </param>
     /// <param name="testConnectionString">
     ///   Connection string to the Testcontainer SQL Server database.
@@ -46,7 +51,6 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             // ── Replace AppDbContext ──────────────────────────────────────────
-            // Remove the options singleton that carries the production connection string.
             var dbOptionsDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
             if (dbOptionsDescriptor is not null)
@@ -56,11 +60,6 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
                 options.UseSqlServer(_testConnectionString));
 
             // ── Redirect Strava HTTP client to WireMock ───────────────────────
-            // Remove the typed-client binding so a new one can be registered with the
-            // WireMock base address.  The IHttpClientFactory options for this named
-            // client accumulate both the original base-address action (Program.cs) and
-            // the one below; because actions run in registration order the last write wins,
-            // so the WireMock URL takes effect.
             var stravaDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(IStravaTokenService));
             if (stravaDescriptor is not null)
@@ -68,6 +67,17 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddHttpClient<IStravaTokenService, StravaTokenService>(client =>
                 client.BaseAddress = new Uri(_stravaBaseUrl));
+
+            // ── Replace JWT Bearer auth with FakeAuthHandler ──────────────────
+            // Tests authenticate by setting X-Test-User-Id on the request.
+            // Anonymous endpoints (e.g. /api/strava/callback) are unaffected.
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = FakeAuthHandler.SchemeName;
+                options.DefaultChallengeScheme = FakeAuthHandler.SchemeName;
+            })
+            .AddScheme<AuthenticationSchemeOptions, FakeAuthHandler>(
+                FakeAuthHandler.SchemeName, _ => { });
         });
     }
 }

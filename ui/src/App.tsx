@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useIsAuthenticated } from '@azure/msal-react';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
+import { StravaConnectedPage } from './pages/StravaConnectedPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsAuthenticated();
@@ -23,6 +24,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/strava-connected"
+          element={
+            <ProtectedRoute>
+              <StravaConnectedPage />
             </ProtectedRoute>
           }
         />

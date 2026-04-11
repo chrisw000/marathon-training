@@ -1,8 +1,8 @@
+using MarathonTraining.Application.Profile;
 using MarathonTraining.Application.Strava;
 using MarathonTraining.Application.Strava.Connect;
 using MarathonTraining.Application.Strava.Disconnect;
 using MarathonTraining.Application.Strava.GetStatus;
-using MarathonTraining.Domain.Aggregates;
 using MarathonTraining.Domain.Exceptions;
 using MarathonTraining.Domain.Interfaces;
 using MarathonTraining.Infrastructure.Persistence;
@@ -46,6 +46,9 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// CORS — permit the Vite dev server to call the API directly
+builder.Services.AddCors();
+
 // OpenAPI
 builder.Services.AddOpenApi();
 
@@ -73,6 +76,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // Allow the Vite dev server to call the API without CORS errors
+    app.UseCors(policy => policy
+        .WithOrigins("http://localhost:5173")
+        .AllowAnyHeader()
+        .AllowAnyMethod());
 
     // Create the schema on startup in Development so there is no need to run migrations
     // or apply them manually. EnsureCreatedAsync is a no-op if the schema already exists.
@@ -104,28 +113,24 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
 // ── Profile ────────────────────────────────────────────────────────────────
 
 // Idempotent — creates the AthleteProfile for the current user if one does not exist yet.
-// Call this once after first login before using any other athlete endpoints.
-app.MapPost("/api/profile", async (ClaimsPrincipal user, AppDbContext db) =>
+// Safe to call on every login; the UI calls this automatically after authentication.
+app.MapPost("/api/profile", async (ClaimsPrincipal user, ISender sender) =>
 {
     var userId = user.GetObjectId()
         ?? throw new InvalidOperationException("No object ID claim found on the authenticated user.");
 
-    var exists = await db.AthleteProfiles.AnyAsync(a => a.UserId == userId);
-    if (exists)
-        return Results.Ok(new { created = false });
-
     var displayName = user.Identity?.Name ?? userId;
-    db.AthleteProfiles.Add(new AthleteProfile(Guid.NewGuid(), userId, displayName, DateTimeOffset.UtcNow));
-    await db.SaveChangesAsync();
+    var result = await sender.Send(new EnsureAthleteProfileCommand(userId, displayName));
 
-    return Results.Ok(new { created = true });
+    return Results.Ok(new { created = result.WasCreated });
 })
 .WithName("EnsureProfile")
 .WithTags("Profile");
 
 // ── Strava OAuth ───────────────────────────────────────────────────────────
 
-// Redirects the authenticated user to Strava's OAuth consent page
+// Returns the Strava OAuth consent URL. The client navigates to it via window.location —
+// a server-side redirect cannot be followed by a fetch call that carries a Bearer token.
 app.MapGet("/api/strava/authorise", (
     ClaimsPrincipal user,
     IStravaOAuthStateService stateService,
@@ -140,7 +145,7 @@ app.MapGet("/api/strava/authorise", (
     var redirectUri = config["Strava:RedirectUri"]
         ?? throw new InvalidOperationException("Strava:RedirectUri is not configured.");
 
-    var stravaAuthUrl =
+    var url =
         $"https://www.strava.com/oauth/authorize" +
         $"?client_id={Uri.EscapeDataString(clientId)}" +
         $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
@@ -148,7 +153,7 @@ app.MapGet("/api/strava/authorise", (
         $"&scope=activity:read_all" +
         $"&state={Uri.EscapeDataString(state)}";
 
-    return Results.Redirect(stravaAuthUrl);
+    return Results.Ok(new { url });
 })
 .WithName("StravaAuthorise")
 .WithTags("Strava");
