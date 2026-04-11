@@ -2,6 +2,7 @@ using MarathonTraining.Application.Strava;
 using MarathonTraining.Application.Strava.Connect;
 using MarathonTraining.Application.Strava.Disconnect;
 using MarathonTraining.Application.Strava.GetStatus;
+using MarathonTraining.Domain.Aggregates;
 using MarathonTraining.Domain.Exceptions;
 using MarathonTraining.Domain.Interfaces;
 using MarathonTraining.Infrastructure.Persistence;
@@ -99,6 +100,28 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
 })
 .WithName("Me")
 .WithTags("Diagnostics");
+
+// ── Profile ────────────────────────────────────────────────────────────────
+
+// Idempotent — creates the AthleteProfile for the current user if one does not exist yet.
+// Call this once after first login before using any other athlete endpoints.
+app.MapPost("/api/profile", async (ClaimsPrincipal user, AppDbContext db) =>
+{
+    var userId = user.GetObjectId()
+        ?? throw new InvalidOperationException("No object ID claim found on the authenticated user.");
+
+    var exists = await db.AthleteProfiles.AnyAsync(a => a.UserId == userId);
+    if (exists)
+        return Results.Ok(new { created = false });
+
+    var displayName = user.Identity?.Name ?? userId;
+    db.AthleteProfiles.Add(new AthleteProfile(Guid.NewGuid(), userId, displayName, DateTimeOffset.UtcNow));
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { created = true });
+})
+.WithName("EnsureProfile")
+.WithTags("Profile");
 
 // ── Strava OAuth ───────────────────────────────────────────────────────────
 
