@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MarathonTraining.Api/MarathonTraining.Api.csproj" />
+    <Project Path="src/MarathonTraining.Application/MarathonTraining.Application.csproj" />
+    <Project Path="src/MarathonTraining.Domain/MarathonTraining.Domain.csproj" />
+    <Project Path="src/MarathonTraining.Infrastructure/MarathonTraining.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MarathonTraining.Api.IntegrationTests/MarathonTraining.Api.IntegrationTests.csproj" />
+    <Project Path="tests/MarathonTraining.Application.Tests/MarathonTraining.Application.Tests.csproj" />
+    <Project Path="tests/MarathonTraining.Domain.Tests/MarathonTraining.Domain.Tests.csproj" />
+    <Project Path="tests/MarathonTraining.Infrastructure.Tests/MarathonTraining.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

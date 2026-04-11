@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet:*)",
+      "Bash(npm create:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs\")",
+      "Bash(npm --version)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --version)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs:/c/Users/chris/AppData/Roaming/npm\")",
+      "Bash(pnpm config:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm help:*)",
+      "Bash(pnpm run:*)",
+      "Bash(node -e \"const m = require\\('./node_modules/@azure/msal-browser/dist/index.cjs'\\); const k = Object.keys\\(m\\).filter\\(k => k.toLowerCase\\(\\).includes\\('cache'\\)\\); console.log\\(k\\)\")",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm test:run)",
+      "Bash(pnpm ls:*)",
+      "Bash(pnpm why:*)",
+      "Bash(python3 -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\('deps:', json.dumps\\(p.get\\('dependencies',{}\\), indent=2\\)\\); print\\('peers:', json.dumps\\(p.get\\('peerDependencies',{}\\), indent=2\\)\\)\")",
+      "Bash(pnpm view:*)",
+      "Bash(python3 -c \"import sys,json; vs=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(v for v in vs if not any\\(x in v for x in ['alpha','beta','rc','canary','next','dev']\\) \\)\\)\")",
+      "Bash(pnpm remove:*)"
+    ]
+  }
+}

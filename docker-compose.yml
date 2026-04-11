@@ -1,0 +1,56 @@
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD
+        - /opt/mssql-tools18/bin/sqlcmd
+        - -S
+        - localhost
+        - -U
+        - sa
+        - -P
+        - ${MSSQL_SA_PASSWORD}
+        - -Q
+        - SELECT 1
+        - -C   # trust self-signed cert inside the container
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Connection string — double-underscore maps to ConnectionStrings:DefaultConnection
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=MarathonTraining;
+        User Id=sa;Password=${MSSQL_SA_PASSWORD};
+        TrustServerCertificate=True;
+      # Microsoft Entra External ID / Azure AD
+      AzureAd__Instance: ${AZUREAD_INSTANCE}
+      AzureAd__TenantId: ${AZUREAD_TENANT_ID}
+      AzureAd__ClientId: ${AZUREAD_CLIENT_ID}
+      AzureAd__Audience: ${AZUREAD_AUDIENCE}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:

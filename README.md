@@ -1,0 +1,72 @@
+# Marathon Trainer
+
+A full-stack application to help runners plan, track, and optimize their marathon training.
+
+## Structure
+
+- `api/` — Backend API (.NET 10, clean architecture)
+- `ui/` — Frontend application (React + TypeScript + Vite)
+
+## Getting Started
+
+See the README in each subdirectory for setup instructions.
+
+---
+
+## Verifying the solution
+
+Use the following prompt to ask Claude to verify the full solution builds and all tests pass:
+
+```
+Verify the entire solution builds and all tests pass with zero failures:
+
+1. Run `dotnet build api/MarathonTraining.slnx` and confirm no errors
+2. Run `dotnet test api/MarathonTraining.slnx` and confirm all test projects are discovered and pass (if any project has 0 tests, add a placeholder test)
+3. Run `cd ui && pnpm install && pnpm run build` and confirm no TypeScript errors
+4. Run `pnpm test:run` and confirm all tests are discovered and pass
+
+If anything fails, fix it before moving on. Report the final status of each step.
+```
+
+---
+
+## Dependency policy
+
+These rules apply to both `api/` and `ui/` and are enforced at the tooling level where possible.
+
+### No prerelease packages
+
+All dependencies — direct and transitive — must be fully released versions (no `alpha`, `beta`, `rc`, `preview`, `canary`, or `next` suffixes). This applies to NuGet packages and npm packages alike.
+
+**Why:** Prerelease packages can change their API or behaviour without notice. More importantly, they represent a wider supply-chain attack surface — a compromised prerelease publish is less likely to be caught quickly by the community.
+
+**What to do when a desired package is only available as a prerelease:**
+- Pin to the latest fully released version of that package.
+- If the package has never had a stable release, find an alternative.
+- Do not add an exclusion to work around this policy without explicit sign-off.
+
+### npm — 7-day release cooldown (ui/)
+
+pnpm is configured with `minimum-release-age=10080` (7 days × 1440 min/day) in `ui/.npmrc`. pnpm will refuse to resolve any package version published within the last 7 days, even if it satisfies the `package.json` semver range.
+
+**Why:** Many supply-chain attacks (account takeover, typosquatting, malicious patch bumps) are caught within the first week of a malicious publish. A 7-day window gives the community time to identify and report problems before they reach this codebase.
+
+**The cooldown applies to all packages — stable and prerelease alike.** Do not add `minimum-release-age-exclude` entries without explicit sign-off. If a package is blocked by the cooldown, wait.
+
+### Approved prerelease exceptions (ui/)
+
+Certain prerelease packages are explicitly approved for use. They remain subject to the 7-day cooldown — only the prerelease restriction is waived, not the time rule.
+
+| Package | Approved version range | Reason |
+|---|---|---|
+| `rolldown` + `@rolldown/*` | Any RC | vite 8 uses rolldown as its bundler; rolldown ships RC versions while its API stabilises. Approved for use. Revisit once rolldown reaches 1.0.0 stable. |
+
+### Keeping packages up to date
+
+When upgrading, prefer the latest stable release of each package. If upgrading a package would introduce an unapproved prerelease transitive dependency, pin to the last clean version and note why in the PR description.
+
+#### Current pinned packages (ui/)
+
+| Package | Pinned at | Latest | Reason |
+|---|---|---|---|
+| `eslint-plugin-react-hooks` | `4.6.2` | `7.x` | `7.0.0` introduced `@babel/core` as a direct dependency, pulling in `gensync@1.0.0-beta.2`. |

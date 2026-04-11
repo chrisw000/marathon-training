@@ -1,0 +1,26 @@
+# docker-compose.override.yml — local development overrides
+#
+# 1. Copy this file:  cp docker-compose.override.yml.example docker-compose.override.yml
+# 2. Fill in every placeholder value below.
+# 3. docker-compose.override.yml is gitignored — never commit real secrets.
+#
+# Docker Compose automatically merges this file with docker-compose.yml,
+# so no extra flags are needed: `docker compose up` picks it up automatically.
+
+services:
+
+  sqlserver:
+    environment:
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"   # min 8 chars, upper + lower + digit + symbol
+
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=MarathonTraining;
+        User Id=sa;Password=YourStrong!Passw0rd;
+        TrustServerCertificate=True;
+      AzureAd__Instance: "https://login.microsoftonline.com/"
+      AzureAd__TenantId: "YOUR_TENANT_ID"
+      AzureAd__ClientId: "YOUR_API_CLIENT_ID"
+      AzureAd__Audience: "YOUR_API_CLIENT_ID"

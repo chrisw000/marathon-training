@@ -1,0 +1,6 @@
+@MarathonTraining.Api_HostAddress = http://localhost:5259
+
+GET {{MarathonTraining.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
