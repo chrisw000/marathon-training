@@ -34,7 +34,9 @@
       "Bash(docker image:*)",
       "Bash(docker manifest:*)",
       "Bash(xargs grep:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ls /c/github/marathon.trainer/ui/.env*)"
     ]
   }
 }
