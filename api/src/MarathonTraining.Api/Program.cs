@@ -8,6 +8,7 @@ using MarathonTraining.Infrastructure.Persistence;
 using MarathonTraining.Infrastructure.Persistence.Repositories;
 using MarathonTraining.Infrastructure.Strava;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
@@ -17,6 +18,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Authentication — validates JWTs issued by Microsoft Entra External ID
 builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
+
+// Entra tokens carry aud = "api://<guid>" but AzureAd:Audience is typically configured as
+// just "<guid>" (without the api:// prefix). PostConfigure runs after Microsoft.Identity.Web
+// has already built ValidAudiences, so we can safely append the api:// form here.
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    var audience = builder.Configuration["AzureAd:Audience"]
+                   ?? builder.Configuration["AzureAd:ClientId"];
+    if (string.IsNullOrEmpty(audience)) return;
+
+    var audiences = options.TokenValidationParameters.ValidAudiences?.ToList() ?? [];
+    foreach (var form in (string[])[audience, $"api://{audience}"])
+    {
+        if (!audiences.Contains(form))
+            audiences.Add(form);
+    }
+    options.TokenValidationParameters.ValidAudiences = audiences;
+});
 
 // Authorisation — default policy requires an authenticated user
 builder.Services.AddAuthorization(options =>
@@ -53,6 +72,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // Create the schema on startup in Development so there is no need to run migrations
+    // or apply them manually. EnsureCreatedAsync is a no-op if the schema already exists.
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
 }
 
 app.UseHttpsRedirection();
