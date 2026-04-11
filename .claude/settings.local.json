@@ -21,7 +21,20 @@
       "Bash(python3 -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\('deps:', json.dumps\\(p.get\\('dependencies',{}\\), indent=2\\)\\); print\\('peers:', json.dumps\\(p.get\\('peerDependencies',{}\\), indent=2\\)\\)\")",
       "Bash(pnpm view:*)",
       "Bash(python3 -c \"import sys,json; vs=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(v for v in vs if not any\\(x in v for x in ['alpha','beta','rc','canary','next','dev']\\) \\)\\)\")",
-      "Bash(pnpm remove:*)"
+      "Bash(pnpm remove:*)",
+      "Bash(dotnet run:*)",
+      "Bash(echo \"API PID: $!\")",
+      "Bash(echo \"UI PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(curl:*)",
+      "Bash(kill 839 843)",
+      "Bash(ls C:/github/marathon.trainer/ui/.env*)",
+      "Bash(docker run:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker image:*)",
+      "Bash(docker manifest:*)",
+      "Bash(xargs grep:*)",
+      "Bash(git add:*)"
     ]
   }
 }
