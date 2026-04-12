@@ -259,3 +259,53 @@ The container uses `mcr.microsoft.com/azure-sql-edge:latest` (multi-arch, ARM64-
 The wait strategy is `Wait.ForUnixContainer().UntilPortIsAvailable(1433)` (not the default
 `sqlcmd` check, which fails on Azure SQL Edge). After the port is open, `EnsureCreatedAsync`
 is retried up to 30 times with 2-second delays to handle the engine startup window.
+
+---
+
+## Known hrTSS test values
+
+Profile used in all RunTssCalculator and RideTssCalculator tests unless stated otherwise:
+`RestingHr=50, MaxHr=185, ThresholdHr=162`
+
+### TRIMP-based threshold denominator
+
+```
+thresholdReserve = (162 - 50) / (185 - 50) = 112 / 135 = 0.82963
+threshold_trimp  = 1.0 × 0.82963 × 0.64 × exp(1.92 × 0.82963)
+                 = 0.82963 × 0.64 × exp(1.5929)
+                 = 0.82963 × 0.64 × 4.9176
+                 = 2.612
+```
+
+All Run TSS values divide the activity TRIMP by this denominator and multiply by 100.
+
+### Verified Run TSS values (RestingHr=50, MaxHr=185, ThresholdHr=162)
+
+| avgHr | Duration | hrReserve | TSS |
+|---|---|---|---|
+| 162 | 3600s (1 h) | 0.8296 | 100.0 (by definition — hr == threshold) |
+| 135 | 3600s (1 h) | 0.6296 | 51.7 |
+| 158 | 2700s (45 min) | 0.8000 | 68.3 |
+| 130 | 7200s (2 h) | 0.5926 | 90.6 |
+| 120 | 1200s (20 min) | 0.5185 | 11.5 |
+
+These values were independently verified by step-by-step manual calculation on 2026-04-12.
+The threshold_trimp denominator for profile RestingHr=50, MaxHr=185, ThresholdHr=162 is 2.612.
+
+Previous (incorrect) expected values in the test suite were: 56.8, 69.4, 98.7, 13.1 — these
+were computed with a wrong denominator. Corrected 2026-04-12.
+
+### Verified Ride TSS values (FTP=220w, power path)
+
+Formula: `TSS = t_hours × (NP / FTP)² × 100`
+
+| NP (watts) | Duration | IF (NP/FTP) | TSS |
+|---|---|---|---|
+| 220 | 3600s (1 h) | 1.000 | 100.0 |
+| 176 | 5400s (90 min) | 0.800 | 96.0 |
+| 242 | 2700s (45 min) | 1.100 | 90.8 |
+| 165 | 7200s (2 h) | 0.750 | 112.5 |
+| 132 | 1800s (30 min) | 0.600 | 18.0 |
+
+Previous (incorrect) expected values for the last two: 150.0 and 30.0 — these were based on
+a formula missing the IF² squaring. Corrected 2026-04-12.
