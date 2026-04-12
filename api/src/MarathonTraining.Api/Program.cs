@@ -77,9 +77,14 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
-    // Allow the Vite dev server to call the API without CORS errors
+    // Allow the Vite dev server to call the API without CORS errors.
+    // Origins are in appsettings.Development.json so Vite's port auto-increment
+    // (5173, 5174, ...) doesn't require a code change.
+    var allowedOrigins = app.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? ["http://localhost:5173"];
     app.UseCors(policy => policy
-        .WithOrigins("http://localhost:5173")
+        .WithOrigins(allowedOrigins)
         .AllowAnyHeader()
         .AllowAnyMethod());
 
