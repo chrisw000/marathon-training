@@ -1,10 +1,16 @@
+using FluentValidation;
+using MarathonTraining.Application.Athlete;
+using MarathonTraining.Application.Common.Behaviours;
+using MarathonTraining.Application.Common.Interfaces;
 using MarathonTraining.Application.Profile;
 using MarathonTraining.Application.Strava;
 using MarathonTraining.Application.Strava.Connect;
 using MarathonTraining.Application.Strava.Disconnect;
 using MarathonTraining.Application.Strava.GetStatus;
+using MarathonTraining.Api.Endpoints;
 using MarathonTraining.Domain.Exceptions;
 using MarathonTraining.Domain.Interfaces;
+using MarathonTraining.Infrastructure.Auth;
 using MarathonTraining.Infrastructure.Persistence;
 using MarathonTraining.Infrastructure.Persistence.Repositories;
 using MarathonTraining.Infrastructure.Strava;
@@ -52,9 +58,15 @@ builder.Services.AddCors();
 // OpenAPI
 builder.Services.AddOpenApi();
 
-// MediatR — scans Application assembly for all handlers
+// MediatR — scans Application assembly for all handlers + validation pipeline
 builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(ConnectStravaCommand).Assembly));
+{
+    cfg.RegisterServicesFromAssembly(typeof(ConnectStravaCommand).Assembly);
+    cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
+});
+
+// FluentValidation — registers all validators in the Application assembly
+builder.Services.AddValidatorsFromAssembly(typeof(GetAthleteProfileQuery).Assembly);
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -63,6 +75,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Repositories
 builder.Services.AddScoped<IAthleteProfileRepository, AthleteProfileRepository>();
 builder.Services.AddScoped<IStravaTokenRepository, StravaTokenRepository>();
+
+// Current user service — reads oid claim from the HTTP context
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Strava HTTP client — base address is the Strava API root
 builder.Services.AddHttpClient<IStravaTokenService, StravaTokenService>(client =>
@@ -228,6 +244,10 @@ app.MapGet("/api/strava/status", async (ClaimsPrincipal user, ISender sender) =>
 })
 .WithName("StravaStatus")
 .WithTags("Strava");
+
+// ── Athlete ────────────────────────────────────────────────────────────────
+
+app.MapAthleteEndpoints();
 
 app.Run();
 

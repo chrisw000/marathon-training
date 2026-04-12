@@ -88,7 +88,11 @@ await db.Database.MigrateAsync();  // applies all pending migrations
 
 ## Current migrations
 
-**None.** Schema is currently managed by `EnsureCreatedAsync`.
+| Migration | Date | Purpose |
+|---|---|---|
+| `AddAthletePhysiology_20260412` | 2026-04-12 | Initial schema — creates `AthleteProfiles` (including `RestingHr`, `MaxHr`, `ThresholdHr`, `FtpWatts`, `CurrentPhase`, `LastSyncedAt`) and `StravaConnections` tables |
+
+> **Note:** This is the first (and only) migration. It creates the full schema from scratch. In Development, `EnsureCreatedAsync` still handles schema creation; the migration exists so future schema changes can be applied incrementally.
 
 ---
 

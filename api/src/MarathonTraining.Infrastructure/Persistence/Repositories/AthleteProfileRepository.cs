@@ -11,6 +11,10 @@ public sealed class AthleteProfileRepository(AppDbContext dbContext) : IAthleteP
         => dbContext.AthleteProfiles
                    .FirstOrDefaultAsync(a => a.UserId == userId, cancellationToken);
 
+    public Task<AthleteProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => dbContext.AthleteProfiles
+                   .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
     public async Task AddAsync(AthleteProfile profile, CancellationToken cancellationToken = default)
     {
         dbContext.AthleteProfiles.Add(profile);

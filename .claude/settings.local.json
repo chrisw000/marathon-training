@@ -36,7 +36,28 @@
       "Bash(xargs grep:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(ls /c/github/marathon.trainer/ui/.env*)"
+      "Bash(ls /c/github/marathon.trainer/ui/.env*)",
+      "Bash(npm run:*)",
+      "Read(//c/Users/chris/AppData/Local/pnpm//**)",
+      "Read(//c/Users/chris/AppData/Roaming/npm/**)",
+      "Read(//c/Users/chris/**)",
+      "Bash(/c/Program Files/nodejs/pnpm run:*)",
+      "Bash(gh pr:*)",
+      "Bash(/c/Users/chris/AppData/Roaming/npm/pnpm run:*)",
+      "Bash(git -C /c/github/marathon.trainer log --oneline -5)",
+      "Bash(git -C /c/github/marathon.trainer add .claude/commands/api-coverage.md .claude/commands/ui-coverage.md .claude/commands/health-check.md .claude/CLAUDE.md docs/coverage/.gitignore docs/coverage/health-check-latest.txt)",
+      "Bash(git -C /c/github/marathon.trainer status --short)",
+      "Bash(git:*)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(node /c/Users/chris/AppData/Roaming/npm/pnpm.js run test -- --run)",
+      "Bash(python3 -c ':*)",
+      "Bash(ls:*)",
+      "Bash(/c/Users/chris/AppData/Local/pnpm/pnpm.cmd test:run)",
+      "Bash(export PATH=\"$PATH:/c/Users/chris/AppData/Local/pnpm\")",
+      "Bash(export PATH=\"$PATH:/c/Users/chris/AppData/Roaming/npm\")",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(pnpm --dir ui run type-check)",
+      "Bash(grep -n \"IRequestHandler\\\\|IRequest\\\\b\" /c/github/marathon.trainer/api/src/MarathonTraining.Application/**/*.cs)"
     ]
   }
 }
