@@ -202,7 +202,14 @@ app.MapDelete("/api/strava/disconnect", async (ClaimsPrincipal user, ISender sen
     var userId = user.GetObjectId()
         ?? throw new InvalidOperationException("No object ID claim found on the authenticated user.");
 
-    await sender.Send(new DisconnectStravaCommand(userId));
+    try
+    {
+        await sender.Send(new DisconnectStravaCommand(userId));
+    }
+    catch (DomainException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
 
     return Results.NoContent();
 })
