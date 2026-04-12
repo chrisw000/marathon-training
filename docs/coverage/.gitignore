@@ -1,0 +1,8 @@
+# Generated coverage reports — not committed
+health-check.md
+ui-coverage.md
+unit-test-coverage.md
+api-coverage.md
+
+# Exception: one-liner status file IS committed for health history
+!health-check-latest.txt

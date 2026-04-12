@@ -168,3 +168,20 @@ schema already exists. Will be replaced with migrations before any multi-environ
 A `fetch()` call carrying an `Authorization: Bearer` header cannot follow a cross-origin
 redirect — the browser drops the header and the CORS preflight fails. The endpoint returns
 `{ url }` and the SPA navigates with `window.location.href = url`.
+
+---
+
+## Coverage and health check commands
+
+All commands live in `.claude/commands/`. Run them by typing the slash command in this session.
+
+| Command | When to run |
+|---|---|
+| `/test-coverage` | After adding or changing application/domain handlers or value objects |
+| `/api-coverage` | After adding or changing API endpoints or integration test feature files |
+| `/ui-coverage` | After adding or changing React components, hooks, or API client functions |
+| `/health-check` | Before every PR and at the end of every coding session |
+| `/review` | Before every commit |
+
+**Output location:** `docs/coverage/` — generated reports are gitignored except
+`health-check-latest.txt`, which is committed to provide a quick health history via `git log`.
