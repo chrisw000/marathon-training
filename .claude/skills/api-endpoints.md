@@ -115,6 +115,9 @@ Use lowercase kebab-case in route strings.
 | GET | `/api/strava/callback` | Anonymous | `ConnectStravaCommand` — exchanges code, stores tokens, redirects UI |
 | DELETE | `/api/strava/disconnect` | Required | `DisconnectStravaCommand` — removes stored tokens |
 | GET | `/api/strava/status` | Required | `GetStravaConnectionStatusQuery` — is Strava connected? |
+| GET | `/api/athlete/profile` | Required | `GetAthleteProfileQuery` — current athlete profile with HR zones, FTP, training phase |
+| PATCH | `/api/athlete/physiology` | Required | `UpdateAthletePhysiologyCommand` — update HR zones and FTP watts |
+| PATCH | `/api/athlete/phase` | Required | `UpdateTrainingPhaseCommand` — update current training phase |
 
 **Update this table when adding new endpoints.**
 

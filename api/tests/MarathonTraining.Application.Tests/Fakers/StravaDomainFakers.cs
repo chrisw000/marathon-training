@@ -1,6 +1,7 @@
 using Bogus;
 using MarathonTraining.Application.Strava;
-using MarathonTraining.Domain.Aggregates;
+using DomainAthleteProfile = MarathonTraining.Domain.Aggregates.AthleteProfile;
+using DomainStravaConnection = MarathonTraining.Domain.Aggregates.StravaConnection;
 
 namespace MarathonTraining.Application.Tests.Fakers;
 
@@ -8,14 +9,14 @@ internal static class StravaDomainFakers
 {
     private static readonly Faker Fake = new();
 
-    internal static AthleteProfile AthleteProfile(string? userId = null) =>
+    internal static DomainAthleteProfile AthleteProfile(string? userId = null) =>
         new(
             id: Guid.NewGuid(),
             userId: userId ?? Fake.Internet.UserName(),
             displayName: Fake.Name.FullName(),
             createdAt: DateTimeOffset.UtcNow.AddDays(-Fake.Random.Int(1, 365)));
 
-    internal static StravaConnection StravaConnection(
+    internal static DomainStravaConnection StravaConnection(
         Guid? athleteProfileId = null,
         DateTimeOffset? expiresAt = null) =>
         new(

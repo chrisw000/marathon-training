@@ -8,9 +8,12 @@ Feature: Endpoint Authentication
     Then the response is 401 Unauthorized
 
     Examples:
-      | method | route                  |
-      | GET    | /me                    |
-      | POST   | /api/profile           |
-      | GET    | /api/strava/authorise  |
-      | DELETE | /api/strava/disconnect |
-      | GET    | /api/strava/status     |
+      | method | route                     |
+      | GET    | /me                       |
+      | POST   | /api/profile              |
+      | GET    | /api/strava/authorise     |
+      | DELETE | /api/strava/disconnect    |
+      | GET    | /api/strava/status        |
+      | GET    | /api/athlete/profile      |
+      | PATCH  | /api/athlete/physiology   |
+      | PATCH  | /api/athlete/phase        |
