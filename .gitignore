@@ -36,3 +36,10 @@ docker-compose.override.yml
 !.vscode/extensions.json
 !.vscode/settings.json
 *.code-workspace
+
+# Reqnroll / SpecFlow — generated code-behind for feature files
+*.feature.cs
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude/worktrees/
