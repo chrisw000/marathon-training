@@ -17,3 +17,6 @@ Feature: Endpoint Authentication
       | GET    | /api/athlete/profile      |
       | PATCH  | /api/athlete/physiology   |
       | PATCH  | /api/athlete/phase        |
+      | GET    | /api/training/load        |
+      | GET    | /api/training/week/2026-01-06 |
+      | POST   | /api/training/recalculate |

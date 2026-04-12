@@ -7,9 +7,11 @@ using MarathonTraining.Application.Strava;
 using MarathonTraining.Application.Strava.Connect;
 using MarathonTraining.Application.Strava.Disconnect;
 using MarathonTraining.Application.Strava.GetStatus;
+using MarathonTraining.Application.Training;
 using MarathonTraining.Api.Endpoints;
 using MarathonTraining.Domain.Exceptions;
 using MarathonTraining.Domain.Interfaces;
+using MarathonTraining.Domain.Services;
 using MarathonTraining.Infrastructure.Auth;
 using MarathonTraining.Infrastructure.Persistence;
 using MarathonTraining.Infrastructure.Persistence.Repositories;
@@ -75,6 +77,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Repositories
 builder.Services.AddScoped<IAthleteProfileRepository, AthleteProfileRepository>();
 builder.Services.AddScoped<IStravaTokenRepository, StravaTokenRepository>();
+builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
+builder.Services.AddScoped<ITrainingWeekRepository, TrainingWeekRepository>();
+
+// TSS calculation — each calculator registered as ITssCalculator; service routes by type
+builder.Services.AddTransient<ITssCalculator, RunTssCalculator>();
+builder.Services.AddTransient<ITssCalculator, RideTssCalculator>();
+builder.Services.AddTransient<ITssCalculator, StrengthTssCalculator>();
+builder.Services.AddTransient<ITssCalculationService, TssCalculationService>();
 
 // Current user service — reads oid claim from the HTTP context
 builder.Services.AddHttpContextAccessor();
@@ -248,6 +258,75 @@ app.MapGet("/api/strava/status", async (ClaimsPrincipal user, ISender sender) =>
 // ── Athlete ────────────────────────────────────────────────────────────────
 
 app.MapAthleteEndpoints();
+
+// ── Training Load ──────────────────────────────────────────────────────────
+
+app.MapGet("/api/training/load", async (
+    string? from,
+    string? to,
+    ICurrentUserService currentUser,
+    IAthleteProfileRepository profileRepo,
+    ISender sender) =>
+{
+    if (!DateOnly.TryParse(from, out var fromDate) || !DateOnly.TryParse(to, out var toDate))
+        return Results.Problem(
+            title: "Invalid date format.",
+            detail: "Parameters 'from' and 'to' must be valid dates (yyyy-MM-dd).",
+            statusCode: StatusCodes.Status400BadRequest);
+
+    var profile = await profileRepo.GetByUserIdAsync(currentUser.UserId);
+    if (profile is null)
+        return Results.Problem(title: "Profile not found.", statusCode: StatusCodes.Status404NotFound);
+
+    var result = await sender.Send(new GetTrainingLoadQuery(profile.Id, fromDate, toDate));
+    return Results.Ok(result);
+})
+.WithName("GetTrainingLoad")
+.WithTags("Training");
+
+app.MapGet("/api/training/week/{weekStart}", async (
+    string weekStart,
+    ICurrentUserService currentUser,
+    IAthleteProfileRepository profileRepo,
+    ISender sender) =>
+{
+    if (!DateOnly.TryParse(weekStart, out var weekStartDate))
+        return Results.Problem(
+            title: "Invalid date format.",
+            detail: "Week start must be a valid date (yyyy-MM-dd).",
+            statusCode: StatusCodes.Status400BadRequest);
+
+    var profile = await profileRepo.GetByUserIdAsync(currentUser.UserId);
+    if (profile is null)
+        return Results.Problem(title: "Profile not found.", statusCode: StatusCodes.Status404NotFound);
+
+    try
+    {
+        var result = await sender.Send(new GetWeekSummaryQuery(profile.Id, weekStartDate));
+        return Results.Ok(result);
+    }
+    catch (MarathonTraining.Application.Common.Exceptions.NotFoundException ex)
+    {
+        return Results.Problem(title: "Week not found.", detail: ex.Message, statusCode: StatusCodes.Status404NotFound);
+    }
+})
+.WithName("GetWeekSummary")
+.WithTags("Training");
+
+app.MapPost("/api/training/recalculate", async (
+    ICurrentUserService currentUser,
+    IAthleteProfileRepository profileRepo,
+    ISender sender) =>
+{
+    var profile = await profileRepo.GetByUserIdAsync(currentUser.UserId);
+    if (profile is null)
+        return Results.Problem(title: "Profile not found.", statusCode: StatusCodes.Status404NotFound);
+
+    var count = await sender.Send(new RecalculateTssCommand(profile.Id));
+    return Results.Ok(new { recalculated = count });
+})
+.WithName("RecalculateTss")
+.WithTags("Training");
 
 app.Run();
 
