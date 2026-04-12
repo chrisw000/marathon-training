@@ -24,6 +24,11 @@ Feature: Strava Connection Management
     When I send a request to disconnect Strava
     Then the disconnect response returns a 400 status
 
+  Scenario: Athlete with an expired Strava token is shown as not connected
+    Given I am an authenticated athlete with an expired Strava connection
+    When I request the Strava connection status
+    Then the status response indicates Strava is not connected
+
   Scenario: Athlete requests the Strava authorisation URL
     Given I am an authenticated athlete with no Strava connection
     When I request the Strava authorisation URL

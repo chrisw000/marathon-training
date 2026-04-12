@@ -41,6 +41,24 @@ public sealed class StravaConnectionSteps(StravaConnectionContext context)
         await db.SaveChangesAsync();
     }
 
+    [Given("I am an authenticated athlete with an expired Strava connection")]
+    public async Task GivenIAmAnAuthenticatedAthleteWithAnExpiredStravaConnection()
+    {
+        var profile = await SeedAthleteAndAuthenticateAsync();
+
+        await using var scope = context.Factory!.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        db.StravaConnections.Add(new StravaConnection(
+            athleteProfileId: profile.Id,
+            stravaAthleteId: Fake.Random.Long(1_000_000, 9_999_999),
+            accessToken: Fake.Random.AlphaNumeric(40),
+            refreshToken: Fake.Random.AlphaNumeric(40),
+            expiresAt: DateTimeOffset.UtcNow.AddHours(-1)));
+
+        await db.SaveChangesAsync();
+    }
+
     // ── When ─────────────────────────────────────────────────────────────────
 
     [When("I request the Strava connection status")]
