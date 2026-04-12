@@ -1,4 +1,5 @@
 using MarathonTraining.Domain.Aggregates;
+using MarathonTraining.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarathonTraining.Infrastructure.Persistence;
@@ -16,6 +17,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(e => e.UserId).IsRequired();
             entity.Property(e => e.DisplayName).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
+
+            entity.Property(e => e.CurrentPhase)
+                  .HasConversion<string>()
+                  .HasDefaultValue(TrainingPhase.Base);
+
+            entity.Property(e => e.LastSyncedAt);
+
+            entity.OwnsOne(e => e.HeartRateZones, hrz =>
+            {
+                hrz.Property(h => h.RestingHr).HasColumnName("RestingHr");
+                hrz.Property(h => h.MaxHr).HasColumnName("MaxHr");
+                hrz.Property(h => h.ThresholdHr).HasColumnName("ThresholdHr");
+            });
+
+            entity.OwnsOne(e => e.Ftp, ftp =>
+            {
+                ftp.Property(f => f.Watts).HasColumnName("FtpWatts");
+            });
         });
 
         modelBuilder.Entity<StravaConnection>(entity =>

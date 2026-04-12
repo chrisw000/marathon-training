@@ -3,3 +3,4 @@
 2026-04-12 | NEEDS ATTENTION | Build: PASS (.NET clean; UI SKIP — Node not in bash PATH) | Tests: 45 passed, 0 failed | Coverage: unit 100% / api 86% / ui-vitest 60%
 2026-04-12 | HEALTHY | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 51 passed, 0 failed | Coverage: unit 100% / api 86% / ui-vitest 100%
 2026-04-12 | HEALTHY | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 52 passed, 0 failed | Coverage: unit 100% / api 100% (status endpoint now covered) / ui-vitest 100%
+2026-04-12 | AT RISK | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 103 passed, 0 failed | Coverage: unit 100% / api 80% / ui-vitest 100% / hooks 25%
