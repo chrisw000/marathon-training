@@ -10,9 +10,11 @@ and track their training load intelligently.
 **Target user:** A single authenticated athlete. There is no multi-tenancy, no public
 registration, no admin panel. Every data-access decision is made in that context.
 
-**Current state:** Authentication (Microsoft Entra External ID), athlete profile creation, and
-Strava OAuth connect/disconnect flow are complete. Activity sync and TSS modelling are not yet
-implemented.
+**Current state:** Authentication (Microsoft Entra External ID), athlete profile CRUD (HR zones,
+FTP, training phase), Strava OAuth connect/disconnect, Strava activity sync, manual strength
+activity logging, TSS/ATL/CTL/TSB training load modelling, training dashboard UI, and settings
+UI are complete. Outstanding: activities list page, manual log UI form, nav bar, Strava token
+refresh, EF migrations (currently `EnsureCreatedAsync`), deployment pipeline.
 
 ### Tech stack
 

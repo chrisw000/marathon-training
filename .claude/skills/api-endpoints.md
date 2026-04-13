@@ -121,6 +121,8 @@ Use lowercase kebab-case in route strings.
 | POST | `/api/activities/sync` | Required | `SyncStravaActivitiesCommand` — incremental or full Strava sync; 422 if not connected, 429 on rate limit |
 | POST | `/api/activities/manual` | Required | `LogManualActivityCommand` — log a manual Strength activity with RPE; 201 with `{ activityId, tssScore }` |
 | GET | `/api/activities` | Required | `GetActivitiesQuery` — paginated list; optional `?type=`, `?from=`, `?to=`, `?page=`, `?pageSize=` |
+| GET | `/api/training/load` | Required | `GetTrainingLoadQuery` — daily ATL/CTL/TSB for a date range; `?from=` and `?to=` required (ISO dates) |
+| GET | `/api/training/week/{weekStart}` | Required | `GetWeekSummaryQuery` — TSS breakdown and training load for a given Monday (ISO date) |
 
 **Update this table when adding new endpoints.**
 
