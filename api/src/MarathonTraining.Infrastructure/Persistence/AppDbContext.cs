@@ -64,7 +64,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(e => e.AthleteProfileId);
             entity.HasIndex(e => new { e.AthleteProfileId, e.StartedAt });
 
+            // Filtered unique index — only enforced where StravaActivityId is present
+            entity.HasIndex(e => e.StravaActivityId)
+                  .IsUnique()
+                  .HasFilter("[StravaActivityId] IS NOT NULL");
+
             entity.Property(e => e.ActivityType).HasConversion<string>();
+            entity.Property(e => e.StravaActivityType).HasMaxLength(50);
+            entity.Property(e => e.ExternalSource).HasMaxLength(20);
 
             entity.OwnsOne(e => e.TssScore, tss =>
             {

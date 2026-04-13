@@ -1,3 +1,4 @@
+using MarathonTraining.Application.Common.Interfaces;
 using MarathonTraining.Application.Strava;
 using MarathonTraining.Infrastructure.Persistence;
 using MarathonTraining.Infrastructure.Strava;
@@ -59,13 +60,21 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(_testConnectionString));
 
-            // ── Redirect Strava HTTP client to WireMock ───────────────────────
+            // ── Redirect Strava HTTP clients to WireMock ─────────────────────
             var stravaDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(IStravaTokenService));
             if (stravaDescriptor is not null)
                 services.Remove(stravaDescriptor);
 
             services.AddHttpClient<IStravaTokenService, StravaTokenService>(client =>
+                client.BaseAddress = new Uri(_stravaBaseUrl));
+
+            var activityClientDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IStravaActivityClient));
+            if (activityClientDescriptor is not null)
+                services.Remove(activityClientDescriptor);
+
+            services.AddHttpClient<IStravaActivityClient, StravaActivityClient>(client =>
                 client.BaseAddress = new Uri(_stravaBaseUrl));
 
             // ── Replace JWT Bearer auth with FakeAuthHandler ──────────────────

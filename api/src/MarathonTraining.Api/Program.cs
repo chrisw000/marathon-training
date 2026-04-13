@@ -94,6 +94,9 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHttpClient<IStravaTokenService, StravaTokenService>(client =>
     client.BaseAddress = new Uri("https://www.strava.com/"));
 
+builder.Services.AddHttpClient<IStravaActivityClient, StravaActivityClient>(client =>
+    client.BaseAddress = new Uri("https://www.strava.com/"));
+
 // Strava OAuth state store — singleton so state survives across requests
 builder.Services.AddSingleton<IStravaOAuthStateService, InMemoryStravaOAuthStateService>();
 
@@ -258,6 +261,10 @@ app.MapGet("/api/strava/status", async (ClaimsPrincipal user, ISender sender) =>
 // ── Athlete ────────────────────────────────────────────────────────────────
 
 app.MapAthleteEndpoints();
+
+// ── Activities ─────────────────────────────────────────────────────────────
+
+app.MapActivityEndpoints();
 
 // ── Training Load ──────────────────────────────────────────────────────────
 

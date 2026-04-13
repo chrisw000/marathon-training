@@ -10,6 +10,9 @@ public sealed class ActivityRepository(AppDbContext dbContext) : IActivityReposi
     public Task<Activity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => dbContext.Activities.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
+    public Task<Activity?> GetByStravaIdAsync(long stravaActivityId, CancellationToken cancellationToken = default)
+        => dbContext.Activities.FirstOrDefaultAsync(a => a.StravaActivityId == stravaActivityId, cancellationToken);
+
     public async Task<IReadOnlyCollection<Activity>> GetByTrainingWeekIdAsync(
         Guid trainingWeekId, CancellationToken cancellationToken = default)
         => await dbContext.Activities
