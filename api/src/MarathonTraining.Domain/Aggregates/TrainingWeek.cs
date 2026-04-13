@@ -17,4 +17,9 @@ public class TrainingWeek
         AthleteId = athleteId;
         WeekStartDate = weekStartDate;
     }
+
+    public void AddActivity(Activity activity)
+    {
+        _activities.Add(activity);
+    }
 }
