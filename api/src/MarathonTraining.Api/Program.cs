@@ -123,8 +123,23 @@ if (app.Environment.IsDevelopment())
 
     // Apply any pending EF Core migrations on startup in Development.
     // MigrateAsync is a no-op when the schema is already up to date.
+    //
+    // If the database was previously created with EnsureCreatedAsync (tables exist but
+    // no __EFMigrationsHistory rows), MigrateAsync would fail trying to CREATE existing
+    // tables. Detect that state and drop the database first so migrations can rebuild
+    // cleanly. Data loss is acceptable in Development.
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (await db.Database.CanConnectAsync())
+    {
+        var applied = (await db.Database.GetAppliedMigrationsAsync()).ToList();
+        var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
+        if (pending.Count > 0 && applied.Count == 0)
+        {
+            // Tables exist from a prior EnsureCreatedAsync run — drop and rebuild.
+            await db.Database.EnsureDeletedAsync();
+        }
+    }
     await db.Database.MigrateAsync();
 }
 
