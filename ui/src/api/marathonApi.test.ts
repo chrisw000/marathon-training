@@ -25,7 +25,7 @@ Object.defineProperty(window, 'location', {
 })
 
 import { useAuth } from '../auth/useAuth'
-import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities, useTrainingLoad, useWeekSummary, useAthleteProfile, useUpdatePhysiology, useUpdateTrainingPhase } from './marathonApi'
+import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities, useTrainingLoad, useWeekSummary, useAthleteProfile, useUpdatePhysiology, useUpdateTrainingPhase, useLogManualActivity } from './marathonApi'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -448,5 +448,62 @@ describe('useUpdateTrainingPhase', () => {
     expect(options.method).toBe('PATCH')
     expect(JSON.parse(options.body as string)).toEqual({ phase: 'Build' })
     expect(result.current.data?.currentPhase).toBe('Build')
+  })
+})
+
+// ── useLogManualActivity ──────────────────────────────────────────────────────
+
+describe('useLogManualActivity', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('POSTs to /api/activities/manual and returns activityId and tssScore', async () => {
+    const result_data = { activityId: 'abc-123', tssScore: 42 }
+    mockFetchOk(result_data)
+
+    const { result } = renderHook(() => useLogManualActivity(), {
+      wrapper: makeWrapper(),
+    })
+
+    result.current.mutate({
+      name: 'Gym — legs',
+      activityType: 'Strength',
+      startedAt: '2026-04-13T09:00:00.000Z',
+      durationMinutes: 45,
+      rpe: 7,
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const [url, options] = mockFetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/api/activities/manual')
+    expect(options.method).toBe('POST')
+    const body = JSON.parse(options.body as string)
+    expect(body.name).toBe('Gym — legs')
+    expect(body.activityType).toBe('Strength')
+    expect(body.durationMinutes).toBe(45)
+    expect(body.rpe).toBe(7)
+    expect(result.current.data).toEqual(result_data)
+  })
+
+  it('throws when the API returns an error status', async () => {
+    mockFetchError(400)
+
+    const { result } = renderHook(() => useLogManualActivity(), {
+      wrapper: makeWrapper(),
+    })
+
+    result.current.mutate({
+      name: 'Test',
+      activityType: 'Strength',
+      startedAt: '2026-04-13T09:00:00.000Z',
+      durationMinutes: 30,
+      rpe: 5,
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toBeInstanceOf(Error)
   })
 })
