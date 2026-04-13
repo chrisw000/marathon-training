@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTrainingLoad, useWeekSummary } from '../api/marathonApi';
 
 /** Returns ISO date string for the Monday of the current week. */
@@ -33,6 +34,7 @@ export function DashboardPage() {
   return (
     <main>
       <h1>Training dashboard</h1>
+      <Link to="/settings">Settings</Link>
 
       {/* ── This week ────────────────────────────────────────────────────── */}
       <section>

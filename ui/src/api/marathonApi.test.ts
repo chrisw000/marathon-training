@@ -25,7 +25,7 @@ Object.defineProperty(window, 'location', {
 })
 
 import { useAuth } from '../auth/useAuth'
-import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities, useTrainingLoad, useWeekSummary } from './marathonApi'
+import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities, useTrainingLoad, useWeekSummary, useAthleteProfile, useUpdatePhysiology, useUpdateTrainingPhase } from './marathonApi'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -353,5 +353,100 @@ describe('useWeekSummary', () => {
 
     expect(result.current.fetchStatus).toBe('idle')
     expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
+
+// ── useAthleteProfile ─────────────────────────────────────────────────────────
+
+describe('useAthleteProfile', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('GETs /api/athlete/profile and returns profile data', async () => {
+    const profileData = {
+      id: 'abc', displayName: 'Chris W', restingHr: 48, maxHr: 178,
+      thresholdHr: 160, ftpWatts: 220, currentPhase: 'Base',
+      hasStravaConnected: true, lastSyncedAt: null,
+    }
+    mockFetchOk(profileData)
+
+    const { result } = renderHook(() => useAthleteProfile(), {
+      wrapper: makeWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/athlete/profile'),
+      expect.any(Object),
+    )
+    expect(result.current.data?.displayName).toBe('Chris W')
+    expect(result.current.data?.currentPhase).toBe('Base')
+  })
+})
+
+// ── useUpdatePhysiology ───────────────────────────────────────────────────────
+
+describe('useUpdatePhysiology', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('PATCHes /api/athlete/physiology with the supplied values', async () => {
+    const updated = {
+      id: 'abc', displayName: 'Chris W', restingHr: 50, maxHr: 180,
+      thresholdHr: 162, ftpWatts: 230, currentPhase: 'Base',
+      hasStravaConnected: true, lastSyncedAt: null,
+    }
+    mockFetchOk(updated)
+
+    const { result } = renderHook(() => useUpdatePhysiology(), {
+      wrapper: makeWrapper(),
+    })
+
+    result.current.mutate({ restingHr: 50, maxHr: 180, thresholdHr: 162, ftpWatts: 230 })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const [url, options] = mockFetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/api/athlete/physiology')
+    expect(options.method).toBe('PATCH')
+    expect(JSON.parse(options.body as string)).toEqual({ restingHr: 50, maxHr: 180, thresholdHr: 162, ftpWatts: 230 })
+    expect(result.current.data?.maxHr).toBe(180)
+  })
+})
+
+// ── useUpdateTrainingPhase ────────────────────────────────────────────────────
+
+describe('useUpdateTrainingPhase', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('PATCHes /api/athlete/phase with the selected phase', async () => {
+    const updated = {
+      id: 'abc', displayName: 'Chris W', restingHr: 48, maxHr: 178,
+      thresholdHr: 160, ftpWatts: 220, currentPhase: 'Build',
+      hasStravaConnected: true, lastSyncedAt: null,
+    }
+    mockFetchOk(updated)
+
+    const { result } = renderHook(() => useUpdateTrainingPhase(), {
+      wrapper: makeWrapper(),
+    })
+
+    result.current.mutate('Build')
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const [url, options] = mockFetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/api/athlete/phase')
+    expect(options.method).toBe('PATCH')
+    expect(JSON.parse(options.body as string)).toEqual({ phase: 'Build' })
+    expect(result.current.data?.currentPhase).toBe('Build')
   })
 })
