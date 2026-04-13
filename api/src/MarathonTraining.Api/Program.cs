@@ -57,6 +57,10 @@ builder.Services.AddAuthorization(options =>
 // CORS — permit the Vite dev server to call the API directly
 builder.Services.AddCors();
 
+// Problem details — RFC 7807 error responses for unhandled exceptions.
+// Exception details (type, message, stack trace) are only included in Development.
+builder.Services.AddProblemDetails();
+
 // OpenAPI
 builder.Services.AddOpenApi();
 
@@ -117,12 +121,16 @@ if (app.Environment.IsDevelopment())
         .AllowAnyHeader()
         .AllowAnyMethod());
 
-    // Create the schema on startup in Development so there is no need to run migrations
-    // or apply them manually. EnsureCreatedAsync is a no-op if the schema already exists.
+    // Apply any pending EF Core migrations on startup in Development.
+    // MigrateAsync is a no-op when the schema is already up to date.
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
+
+// Global exception handler — catches unhandled exceptions and returns RFC 7807
+// problem details JSON. Keeps the developer exception page from leaking HTML into API clients.
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
