@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MarathonTraining.Infrastructure\MarathonTraining.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AwesomeAssertions" Version="9.4.0" />
     <PackageReference Include="Bogus" Version="35.6.5" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
@@ -18,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="AwesomeAssertions" />
     <Using Include="Xunit" />
   </ItemGroup>
 
