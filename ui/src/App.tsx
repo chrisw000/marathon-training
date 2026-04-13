@@ -1,14 +1,16 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useIsAuthenticated } from '@azure/msal-react';
+import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { StravaConnectedPage } from './pages/StravaConnectedPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ActivitiesPage } from './pages/ActivitiesPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsAuthenticated();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+  return isAuthenticated ? <Layout>{children}</Layout> : <Navigate to="/" replace />;
 }
 
 function RootRoute() {
@@ -42,6 +44,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/activities"
+          element={
+            <ProtectedRoute>
+              <ActivitiesPage />
             </ProtectedRoute>
           }
         />

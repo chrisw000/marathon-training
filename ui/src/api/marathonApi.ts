@@ -195,6 +195,33 @@ export function useActivities(params?: { type?: string; page?: number; pageSize?
   });
 }
 
+export interface ManualActivityInput {
+  name: string;
+  activityType: 'Strength';
+  startedAt: string;
+  durationMinutes: number;
+  rpe: number;
+  notes?: string;
+}
+
+export interface ManualActivityResult {
+  activityId: string;
+  tssScore: number | null;
+}
+
+export function useLogManualActivity() {
+  const { getAccessToken } = useAuth();
+  return useMutation({
+    mutationFn: async (input: ManualActivityInput): Promise<ManualActivityResult> => {
+      const token = await getAccessToken();
+      return apiRequest('/api/activities/manual', token, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+    },
+  });
+}
+
 // ── Training load ─────────────────────────────────────────────────────────────
 
 export interface TrainingLoadDay {
