@@ -25,7 +25,7 @@ Object.defineProperty(window, 'location', {
 })
 
 import { useAuth } from '../auth/useAuth'
-import { useEnsureProfile, useStravaStatus, useStravaAuthorise } from './marathonApi'
+import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities } from './marathonApi'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -185,5 +185,92 @@ describe('useStravaAuthorise', () => {
       expect.any(Object),
     )
     expect(window.location.href).toBe(stravaUrl)
+  })
+})
+
+// ── useSyncActivities ─────────────────────────────────────────────────────────
+
+describe('useSyncActivities', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('POSTs to /api/activities/sync and returns the sync result', async () => {
+    const syncResult = { activitiesSynced: 5, activitiesSkipped: 2, syncedAt: '2026-04-12T10:00:00Z' }
+    mockFetchOk(syncResult)
+
+    const { result } = renderHook(() => useSyncActivities(), {
+      wrapper: makeWrapper(),
+    })
+
+    result.current.mutate()
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/activities/sync'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(result.current.data).toEqual(syncResult)
+  })
+
+  it('throws when the API returns an error status', async () => {
+    mockFetchError(422)
+
+    const { result } = renderHook(() => useSyncActivities(), {
+      wrapper: makeWrapper(),
+    })
+
+    result.current.mutate()
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toBeInstanceOf(Error)
+  })
+})
+
+// ── useActivities ─────────────────────────────────────────────────────────────
+
+describe('useActivities', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('GETs /api/activities and returns the activity list', async () => {
+    const listResult = {
+      items: [
+        { id: '1', name: 'Morning Run', activityType: 'Run', startedAt: '', durationSeconds: 3600, distanceMetres: 10000, tssScore: 55, averageHeartRateBpm: 145 },
+      ],
+      totalCount: 1, page: 1, pageSize: 10, totalPages: 1, hasNextPage: false, hasPreviousPage: false,
+    }
+    mockFetchOk(listResult)
+
+    const { result } = renderHook(() => useActivities(), {
+      wrapper: makeWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/activities'),
+      expect.any(Object),
+    )
+    expect(result.current.data?.items).toHaveLength(1)
+    expect(result.current.data?.totalCount).toBe(1)
+  })
+
+  it('appends type and pageSize query params when provided', async () => {
+    mockFetchOk({ items: [], totalCount: 0, page: 1, pageSize: 5, totalPages: 0, hasNextPage: false, hasPreviousPage: false })
+
+    const { result } = renderHook(() => useActivities({ type: 'Run', pageSize: 5 }), {
+      wrapper: makeWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const [url] = mockFetch.mock.calls[0] as [string]
+    expect(url).toContain('type=Run')
+    expect(url).toContain('pageSize=5')
   })
 })

@@ -78,3 +78,61 @@ export function useStravaAuthorise() {
     },
   });
 }
+
+// ── Activities ────────────────────────────────────────────────────────────────
+
+export interface SyncResult {
+  activitiesSynced: number;
+  activitiesSkipped: number;
+  syncedAt: string;
+}
+
+export function useSyncActivities() {
+  const { getAccessToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async (): Promise<SyncResult> => {
+      const token = await getAccessToken();
+      return apiRequest('/api/activities/sync', token, { method: 'POST' });
+    },
+  });
+}
+
+export interface ActivitySummary {
+  id: string;
+  name: string;
+  activityType: string;
+  startedAt: string;
+  durationSeconds: number;
+  distanceMetres: number | null;
+  tssScore: number | null;
+  averageHeartRateBpm: number | null;
+}
+
+export interface ActivityListResult {
+  items: ActivitySummary[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export function useActivities(params?: { type?: string; page?: number; pageSize?: number }) {
+  const { getAccessToken } = useAuth();
+
+  const searchParams = new URLSearchParams();
+  if (params?.type) searchParams.set('type', params.type);
+  if (params?.page) searchParams.set('page', String(params.page));
+  if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize));
+  const qs = searchParams.size > 0 ? `?${searchParams.toString()}` : '';
+
+  return useQuery({
+    queryKey: ['activities', params],
+    queryFn: async (): Promise<ActivityListResult> => {
+      const token = await getAccessToken();
+      return apiRequest(`/api/activities${qs}`, token);
+    },
+  });
+}
