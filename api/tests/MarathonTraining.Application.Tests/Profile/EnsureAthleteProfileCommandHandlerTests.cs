@@ -27,6 +27,8 @@ public sealed class EnsureAthleteProfileCommandHandlerTests
         var displayName = Fake.Name.FullName();
 
         _profileRepository.GetByUserIdAsync(userId).Returns((AthleteProfile?)null);
+        _profileRepository.AddAsync(Arg.Any<AthleteProfile>(), Arg.Any<CancellationToken>())
+            .Returns(true);
 
         var result = await _handler.Handle(
             new EnsureAthleteProfileCommand(userId, displayName),
@@ -39,6 +41,25 @@ public sealed class EnsureAthleteProfileCommandHandlerTests
                 p.UserId == userId &&
                 p.DisplayName == displayName),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ConcurrentInsert_ReturnsWasCreatedFalseWithoutThrowing()
+    {
+        // Simulates two simultaneous logins: both pass the GetByUserId check,
+        // but the repository signals that a concurrent request won the race.
+        var userId = Guid.NewGuid().ToString();
+        var displayName = Fake.Name.FullName();
+
+        _profileRepository.GetByUserIdAsync(userId).Returns((AthleteProfile?)null);
+        _profileRepository.AddAsync(Arg.Any<AthleteProfile>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        var result = await _handler.Handle(
+            new EnsureAthleteProfileCommand(userId, displayName),
+            CancellationToken.None);
+
+        result.WasCreated.Should().BeFalse();
     }
 
     [Fact]

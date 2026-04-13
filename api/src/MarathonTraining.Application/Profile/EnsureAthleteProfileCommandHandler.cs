@@ -24,8 +24,8 @@ public sealed class EnsureAthleteProfileCommandHandler(
             request.DisplayName,
             DateTimeOffset.UtcNow);
 
-        await athleteProfileRepository.AddAsync(profile, cancellationToken);
+        var wasInserted = await athleteProfileRepository.AddAsync(profile, cancellationToken);
 
-        return new EnsureAthleteProfileResult(WasCreated: true);
+        return new EnsureAthleteProfileResult(WasCreated: wasInserted);
     }
 }
