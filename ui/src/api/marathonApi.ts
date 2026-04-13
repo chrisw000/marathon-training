@@ -136,3 +136,62 @@ export function useActivities(params?: { type?: string; page?: number; pageSize?
     },
   });
 }
+
+// ── Training load ─────────────────────────────────────────────────────────────
+
+export interface TrainingLoadDay {
+  date: string;
+  atl: number;
+  ctl: number;
+  tsb: number;
+  dailyTss: number;
+  isOvertrainingWarning: boolean;
+  isOvertrainingDanger: boolean;
+  isRaceReady: boolean;
+  formDescription: string;
+}
+
+export function useTrainingLoad(from: string, to: string) {
+  const { getAccessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ['training-load', from, to],
+    queryFn: async (): Promise<TrainingLoadDay[]> => {
+      const token = await getAccessToken();
+      return apiRequest(`/api/training/load?from=${from}&to=${to}`, token);
+    },
+    enabled: !!from && !!to,
+  });
+}
+
+export interface WeekSummary {
+  weekStart: string;
+  totalTss: number;
+  runCount: number;
+  rideCount: number;
+  strengthCount: number;
+  runTss: number;
+  rideTss: number;
+  strengthTss: number;
+  trainingLoad: TrainingLoadDay;
+  hasOvertrainingWarning: boolean;
+  recommendation: string;
+}
+
+export function useWeekSummary(weekStart: string) {
+  const { getAccessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ['week-summary', weekStart],
+    queryFn: async (): Promise<WeekSummary> => {
+      const token = await getAccessToken();
+      return apiRequest(`/api/training/week/${weekStart}`, token);
+    },
+    enabled: !!weekStart,
+    retry: (failureCount, error) => {
+      // Don't retry 404 — week simply hasn't started yet
+      if (error instanceof Error && error.message.includes('404')) return false;
+      return failureCount < 2;
+    },
+  });
+}

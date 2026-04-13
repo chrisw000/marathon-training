@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import {
   useEnsureProfile,
@@ -47,6 +48,7 @@ export function HomePage() {
       {stravaStatus.data?.isConnected ? (
         <section>
           <p>Strava connected ✓</p>
+          <Link to="/dashboard">View training dashboard</Link>
           <button
             onClick={handleSync}
             disabled={syncActivities.isPending}

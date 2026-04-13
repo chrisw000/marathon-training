@@ -25,7 +25,7 @@ Object.defineProperty(window, 'location', {
 })
 
 import { useAuth } from '../auth/useAuth'
-import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities } from './marathonApi'
+import { useEnsureProfile, useStravaStatus, useStravaAuthorise, useSyncActivities, useActivities, useTrainingLoad, useWeekSummary } from './marathonApi'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -272,5 +272,86 @@ describe('useActivities', () => {
     const [url] = mockFetch.mock.calls[0] as [string]
     expect(url).toContain('type=Run')
     expect(url).toContain('pageSize=5')
+  })
+})
+
+// ── useTrainingLoad ───────────────────────────────────────────────────────────
+
+describe('useTrainingLoad', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('GETs /api/training/load with from and to params', async () => {
+    const loadData = [
+      { date: '2026-04-10', atl: 52.1, ctl: 47.3, tsb: -4.8, dailyTss: 85, isOvertrainingWarning: false, isOvertrainingDanger: false, isRaceReady: false, formDescription: 'Productive' },
+    ]
+    mockFetchOk(loadData)
+
+    const { result } = renderHook(() => useTrainingLoad('2026-03-17', '2026-04-13'), {
+      wrapper: makeWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const [url] = mockFetch.mock.calls[0] as [string]
+    expect(url).toContain('/api/training/load')
+    expect(url).toContain('from=2026-03-17')
+    expect(url).toContain('to=2026-04-13')
+    expect(result.current.data).toHaveLength(1)
+  })
+
+  it('does not fetch when from or to are empty', () => {
+    const { result } = renderHook(() => useTrainingLoad('', ''), {
+      wrapper: makeWrapper(),
+    })
+
+    expect(result.current.fetchStatus).toBe('idle')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
+
+// ── useWeekSummary ────────────────────────────────────────────────────────────
+
+describe('useWeekSummary', () => {
+  beforeEach(() => {
+    mockAuth()
+    mockFetch.mockReset()
+  })
+
+  it('GETs /api/training/week/{weekStart} and returns summary', async () => {
+    const summary = {
+      weekStart: '2026-04-07',
+      totalTss: 320,
+      runCount: 3, rideCount: 1, strengthCount: 2,
+      runTss: 210, rideTss: 80, strengthTss: 30,
+      trainingLoad: { date: '2026-04-13', atl: 50, ctl: 45, tsb: -5, dailyTss: 0, isOvertrainingWarning: false, isOvertrainingDanger: false, isRaceReady: false, formDescription: 'Productive' },
+      hasOvertrainingWarning: false,
+      recommendation: 'On track',
+    }
+    mockFetchOk(summary)
+
+    const { result } = renderHook(() => useWeekSummary('2026-04-07'), {
+      wrapper: makeWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/training/week/2026-04-07'),
+      expect.any(Object),
+    )
+    expect(result.current.data?.totalTss).toBe(320)
+    expect(result.current.data?.recommendation).toBe('On track')
+  })
+
+  it('does not fetch when weekStart is empty', () => {
+    const { result } = renderHook(() => useWeekSummary(''), {
+      wrapper: makeWrapper(),
+    })
+
+    expect(result.current.fetchStatus).toBe('idle')
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { HomePage } from './HomePage'
 
 vi.mock('../auth/useAuth', () => ({
@@ -63,13 +64,13 @@ function setupDefaultMocks() {
 describe('HomePage', () => {
   it('renders the user display name', () => {
     setupDefaultMocks()
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByText(/Ada Lovelace/)).toBeInTheDocument()
   })
 
   it('renders a sign-out button', () => {
     setupDefaultMocks()
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
   })
 
@@ -77,7 +78,7 @@ describe('HomePage', () => {
     setupDefaultMocks()
     vi.mocked(useStravaStatus).mockReturnValue({ isLoading: true, data: undefined, refetch: vi.fn() } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByText(/checking strava connection/i)).toBeInTheDocument()
   })
 
@@ -89,7 +90,7 @@ describe('HomePage', () => {
       refetch: vi.fn(),
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByText(/strava connected/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sync activities/i })).toBeInTheDocument()
   })
@@ -102,7 +103,7 @@ describe('HomePage', () => {
       refetch: vi.fn(),
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByRole('button', { name: /connect strava/i })).toBeInTheDocument()
   })
 
@@ -121,7 +122,7 @@ describe('HomePage', () => {
       data: undefined,
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByRole('button', { name: /syncing/i })).toBeDisabled()
   })
 
@@ -140,7 +141,7 @@ describe('HomePage', () => {
       data: { activitiesSynced: 3, activitiesSkipped: 1, syncedAt: '2026-04-12T10:00:00Z' },
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByText(/3 activities synced/i)).toBeInTheDocument()
   })
 
@@ -159,7 +160,7 @@ describe('HomePage', () => {
       data: undefined,
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByText(/sync failed/i)).toBeInTheDocument()
   })
 
@@ -176,7 +177,7 @@ describe('HomePage', () => {
       refetch: vi.fn(),
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     expect(screen.getByText(/Morning Run/)).toBeInTheDocument()
     expect(screen.getByText(/Strength Session/)).toBeInTheDocument()
     expect(screen.getByText(/TSS 55/)).toBeInTheDocument()
@@ -198,8 +199,20 @@ describe('HomePage', () => {
       data: undefined,
     } as any)
 
-    render(<HomePage />)
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
     await userEvent.click(screen.getByRole('button', { name: /sync activities/i }))
     expect(mockSync).toHaveBeenCalledOnce()
+  })
+
+  it('shows dashboard link when Strava is connected', () => {
+    setupDefaultMocks()
+    vi.mocked(useStravaStatus).mockReturnValue({
+      isLoading: false,
+      data: { isConnected: true, stravaAthleteId: 12345, expiresAt: null },
+      refetch: vi.fn(),
+    } as any)
+
+    render(<MemoryRouter><HomePage /></MemoryRouter>)
+    expect(screen.getByRole('link', { name: /view training dashboard/i })).toBeInTheDocument()
   })
 })
