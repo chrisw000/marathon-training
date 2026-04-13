@@ -3,6 +3,7 @@ import { useIsAuthenticated } from '@azure/msal-react';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { StravaConnectedPage } from './pages/StravaConnectedPage';
+import { DashboardPage } from './pages/DashboardPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsAuthenticated();
@@ -32,6 +33,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <StravaConnectedPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
             </ProtectedRoute>
           }
         />
