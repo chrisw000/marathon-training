@@ -1,14 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '../auth/useAuth';
-import { useEnsureProfile, useStravaStatus, useStravaAuthorise } from '../api/marathonApi';
+import {
+  useEnsureProfile,
+  useStravaStatus,
+  useStravaAuthorise,
+  useSyncActivities,
+  useActivities,
+} from '../api/marathonApi';
 
 export function HomePage() {
-  const { user, logout, getAccessToken } = useAuth();
-  const [copied, setCopied] = useState(false);
+  const { user, logout } = useAuth();
 
   const ensureProfile = useEnsureProfile();
   const stravaStatus = useStravaStatus();
   const stravaAuthorise = useStravaAuthorise();
+  const syncActivities = useSyncActivities();
+  const activities = useActivities({ pageSize: 10 });
 
   // Ensure the athlete profile exists as soon as the home page mounts.
   // This is idempotent — safe to call on every login.
@@ -23,15 +30,12 @@ export function HomePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const copyToken = async () => {
-    const token = await getAccessToken();
-    await navigator.clipboard.writeText(token);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const connectStrava = () => {
-    stravaAuthorise.mutate();
+  const handleSync = () => {
+    syncActivities.mutate(undefined, {
+      onSuccess: () => {
+        void activities.refetch();
+      },
+    });
   };
 
   return (
@@ -41,11 +45,25 @@ export function HomePage() {
       {stravaStatus.isLoading && <p>Checking Strava connection…</p>}
 
       {stravaStatus.data?.isConnected ? (
-        <p>Strava connected ✓</p>
+        <section>
+          <p>Strava connected ✓</p>
+          <button
+            onClick={handleSync}
+            disabled={syncActivities.isPending}
+          >
+            {syncActivities.isPending ? 'Syncing…' : 'Sync activities'}
+          </button>
+          {syncActivities.isSuccess && (
+            <p>{syncActivities.data.activitiesSynced} activities synced</p>
+          )}
+          {syncActivities.isError && (
+            <p>Sync failed — please try again</p>
+          )}
+        </section>
       ) : (
         stravaStatus.data && (
           <button
-            onClick={connectStrava}
+            onClick={() => stravaAuthorise.mutate()}
             disabled={stravaAuthorise.isPending}
           >
             {stravaAuthorise.isPending ? 'Redirecting…' : 'Connect Strava'}
@@ -53,8 +71,21 @@ export function HomePage() {
         )
       )}
 
+      {activities.data && activities.data.items.length > 0 && (
+        <section>
+          <h2>Recent activities</h2>
+          <ul>
+            {activities.data.items.map((a) => (
+              <li key={a.id}>
+                {a.name} — {a.activityType}
+                {a.tssScore != null && ` — TSS ${a.tssScore}`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <button onClick={() => void logout()}>Sign out</button>
-      <button onClick={() => void copyToken()}>{copied ? 'Copied!' : 'Copy API token'}</button>
     </main>
   );
 }

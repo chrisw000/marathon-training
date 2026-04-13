@@ -122,19 +122,40 @@ context.WireMockServer!
 
 ## Activity sync — current state
 
-**Not yet implemented.** The domain model (`Activity`, `TrainingWeek`, `ActivityType`) and
-repository interfaces (`IActivityRepository`, `ITrainingWeekRepository`) are defined but no
-sync handler or Strava API client exists yet.
+**Implemented.** The full sync pipeline is live:
 
-**Planned Strava API endpoints:**
-- `GET /api/v3/athlete` — fetch athlete metadata
-- `GET /api/v3/athlete/activities` — paginated activity list
+- `POST /api/activities/sync` — triggers Strava sync for the authenticated athlete
+  - Handler: `SyncStravaActivitiesCommandHandler`
+  - Paginates through `GET /api/v3/athlete/activities` (100 per page)
+  - Incremental after first sync (uses `profile.LastSyncedAt` as `after` epoch)
+  - Auto-refreshes token if expiring within 5 minutes
+  - Returns `{ activitiesSynced, activitiesSkipped, syncedAt }`
+  - 422 if no Strava connection; 429 propagated from Strava rate limit
 
-**Domain mapping (planned):**  
-Strava `type` field → `ActivityType` enum: `Run` | `Ride` | `Strength`  
+- `POST /api/activities/manual` — logs a non-Strava activity (strength sessions)
+  - Handler: `LogManualActivityCommandHandler`
+  - Validates: ActivityType must be Strength, duration 1–479 min, RPE 1–10
+  - Returns 201 with `{ activityId, tssScore }`
+
+- `GET /api/activities` — paginated activity list with optional filters
+  - Query params: `type` (Run/Ride/Strength), `from`, `to`, `page`, `pageSize`
+  - Returns `{ items, totalCount, page, pageSize, totalPages, hasNextPage, hasPreviousPage }`
+
+**Domain mapping:**  
+Strava `sport_type` → `ActivityType` enum: `Run` | `Ride` | `Strength` (via `ActivityTypeMapper`)  
 Strava `moving_time` → `Activity.DurationSeconds`  
 Strava `distance` (metres) → `Activity.DistanceMetres`  
-TSS score will be calculated from duration/distance/heart-rate data after sync.
+TSS is calculated immediately after sync using `ITssCalculationService`.
+
+**UI hooks (marathonApi.ts):**  
+- `useSyncActivities()` — mutation for `POST /api/activities/sync`
+- `useActivities(params?)` — query for `GET /api/activities` with optional type/page filters
+
+**EF Core note:** `TrainingWeekRepository.UpdateAsync` explicitly sets new `Activity` entities
+to `EntityState.Added` before `SaveChangesAsync`. EF Core's `DetectChanges` marks navigation-
+discovered entities with non-default Guid keys as `Modified` instead of `Added`, which causes
+`DbUpdateConcurrencyException`. Always use this pattern when adding child entities to a
+tracked aggregate.
 
 ---
 
