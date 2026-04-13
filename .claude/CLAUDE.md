@@ -162,9 +162,12 @@ full SQL Server, so EF Core's `UseSqlServer` works unchanged.
 Faster installs, strict dependency isolation, disk-efficient content-addressable store.
 Declared explicitly as the `packageManager` in `package.json`.
 
-### Why EnsureCreatedAsync (not migrations) in Development
-Simple schema management during early development. `EnsureCreatedAsync` is a no-op if the
-schema already exists. Will be replaced with migrations before any multi-environment deployment.
+### Why MigrateAsync on startup in Development
+`Program.cs` calls `db.Database.MigrateAsync()` in the Development startup block and
+`ContainerHooks.cs` does the same for integration tests. This applies pending migrations
+automatically so developers never need to run `dotnet ef database update` manually. In
+Production, migrations should be applied as a deployment step (e.g. a pre-deploy job),
+not on app startup.
 
 ### Why /api/strava/authorise returns JSON (not a redirect)
 A `fetch()` call carrying an `Authorization: Bearer` header cannot follow a cross-origin

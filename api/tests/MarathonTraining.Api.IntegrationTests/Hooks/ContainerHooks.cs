@@ -66,7 +66,9 @@ public static class ContainerHooks
         await _sqlContainer.StartAsync();
 
         // Port 1433 opens before the SQL engine finishes initialising.
-        // Retry EnsureCreatedAsync until it succeeds (typically within ~10 seconds).
+        // Retry MigrateAsync until it succeeds (typically within ~10 seconds).
+        // Using MigrateAsync (not EnsureCreatedAsync) keeps test schema in sync with
+        // production migrations — any missing migration is caught here, not in prod.
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlServer(_sqlContainer.GetConnectionString())
             .Options;
@@ -76,7 +78,7 @@ public static class ContainerHooks
             try
             {
                 await using var db = new AppDbContext(options);
-                await db.Database.EnsureCreatedAsync();
+                await db.Database.MigrateAsync();
                 return;
             }
             catch (Exception) when (attempt < 29)
