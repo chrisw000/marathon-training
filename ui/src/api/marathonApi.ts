@@ -24,7 +24,65 @@ async function apiRequest<T>(
   return response.json() as Promise<T>;
 }
 
-// ── Profile ──────────────────────────────────────────────────────────────────
+// ── Athlete profile ───────────────────────────────────────────────────────────
+
+export interface AthleteProfile {
+  id: string;
+  displayName: string;
+  restingHr: number | null;
+  maxHr: number | null;
+  thresholdHr: number | null;
+  ftpWatts: number | null;
+  currentPhase: string;
+  hasStravaConnected: boolean;
+  lastSyncedAt: string | null;
+}
+
+export function useAthleteProfile() {
+  const { getAccessToken } = useAuth();
+  return useQuery({
+    queryKey: ['athlete-profile'],
+    queryFn: async (): Promise<AthleteProfile> => {
+      const token = await getAccessToken();
+      return apiRequest('/api/athlete/profile', token);
+    },
+  });
+}
+
+export interface PhysiologyInput {
+  restingHr: number;
+  maxHr: number;
+  thresholdHr: number;
+  ftpWatts: number;
+}
+
+export function useUpdatePhysiology() {
+  const { getAccessToken } = useAuth();
+  return useMutation({
+    mutationFn: async (input: PhysiologyInput): Promise<AthleteProfile> => {
+      const token = await getAccessToken();
+      return apiRequest('/api/athlete/physiology', token, {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      });
+    },
+  });
+}
+
+export function useUpdateTrainingPhase() {
+  const { getAccessToken } = useAuth();
+  return useMutation({
+    mutationFn: async (phase: string): Promise<AthleteProfile> => {
+      const token = await getAccessToken();
+      return apiRequest('/api/athlete/phase', token, {
+        method: 'PATCH',
+        body: JSON.stringify({ phase }),
+      });
+    },
+  });
+}
+
+// ── Profile (ensure) ──────────────────────────────────────────────────────────
 
 interface EnsureProfileResult {
   created: boolean;
