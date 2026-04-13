@@ -18,9 +18,11 @@ public sealed class GetStravaConnectionStatusQueryHandler(
 
         var connection = await stravaTokenRepository.GetByAthleteIdAsync(profile.Id, cancellationToken);
 
-        if (connection is null || connection.ExpiresAt <= DateTimeOffset.UtcNow)
+        if (connection is null)
             return new StravaConnectionStatusDto(false, null, null);
 
+        // A connection record exists. The access token may be expired but the sync
+        // handler refreshes it automatically — report as connected in both cases.
         return new StravaConnectionStatusDto(true, connection.StravaAthleteId, connection.ExpiresAt);
     }
 }

@@ -66,8 +66,10 @@ public sealed class GetStravaConnectionStatusQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ExpiredToken_ReturnsNotConnected()
+    public async Task Handle_ExpiredToken_ReturnsConnected()
     {
+        // Strava access tokens expire every 6 hours. The sync handler refreshes them
+        // automatically, so an expired-but-refreshable token is still "connected".
         var profile = StravaDomainFakers.AthleteProfile();
         var expiresAt = DateTimeOffset.UtcNow.AddHours(-1);
         var connection = StravaDomainFakers.StravaConnection(athleteProfileId: profile.Id, expiresAt: expiresAt);
@@ -83,8 +85,8 @@ public sealed class GetStravaConnectionStatusQueryHandlerTests
 
         var result = await _sut.Handle(query, CancellationToken.None);
 
-        result.IsConnected.Should().BeFalse();
-        result.StravaAthleteId.Should().BeNull();
-        result.ExpiresAt.Should().BeNull();
+        result.IsConnected.Should().BeTrue();
+        result.StravaAthleteId.Should().Be(connection.StravaAthleteId);
+        result.ExpiresAt.Should().Be(expiresAt);
     }
 }

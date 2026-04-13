@@ -14,9 +14,10 @@ vi.mock('../api/marathonApi', () => ({
   useActivities: vi.fn(),
   useSyncActivities: vi.fn(),
   useLogManualActivity: vi.fn(),
+  useStravaStatus: vi.fn(),
 }))
 
-import { useActivities, useSyncActivities, useLogManualActivity } from '../api/marathonApi'
+import { useActivities, useSyncActivities, useLogManualActivity, useStravaStatus } from '../api/marathonApi'
 
 const baseActivity = {
   id: '1',
@@ -40,6 +41,11 @@ const baseListResult = {
 }
 
 function setupDefaultMocks() {
+  vi.mocked(useStravaStatus).mockReturnValue({
+    data: { isConnected: true, stravaAthleteId: 12345, expiresAt: null },
+    isLoading: false,
+    isError: false,
+  } as any)
   vi.mocked(useActivities).mockReturnValue({
     isLoading: false,
     isError: false,
@@ -71,6 +77,14 @@ function renderPage() {
 }
 
 describe('ActivitiesPage', () => {
+  beforeEach(() => {
+    // Default: Strava connected. Individual tests override when testing not-connected path.
+    vi.mocked(useStravaStatus).mockReturnValue({
+      data: { isConnected: true, stravaAthleteId: 12345, expiresAt: null },
+      isLoading: false, isError: false,
+    } as any)
+  })
+
   it('shows loading state', () => {
     vi.mocked(useActivities).mockReturnValue({ isLoading: true, isError: false, data: undefined, refetch: vi.fn() } as any)
     vi.mocked(useSyncActivities).mockReturnValue({ mutate: vi.fn(), isPending: false, isSuccess: false, isError: false, data: undefined } as any)
@@ -215,5 +229,20 @@ describe('ActivitiesPage', () => {
 
     renderPage()
     expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled()
+  })
+
+  it('shows connect Strava link when Strava is not connected', () => {
+    vi.mocked(useStravaStatus).mockReturnValue({
+      data: { isConnected: false, stravaAthleteId: null, expiresAt: null },
+      isLoading: false, isError: false,
+    } as any)
+    vi.mocked(useActivities).mockReturnValue({ isLoading: false, isError: false, data: baseListResult, refetch: vi.fn() } as any)
+    vi.mocked(useSyncActivities).mockReturnValue({ mutate: vi.fn(), isPending: false, isSuccess: false, isError: false, data: undefined } as any)
+    vi.mocked(useLogManualActivity).mockReturnValue({ mutate: vi.fn(), isPending: false, isSuccess: false, isError: false, data: undefined } as any)
+
+    renderPage()
+    expect(screen.getByText(/strava is not connected/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /connect strava/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /sync from strava/i })).not.toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useActivities, useSyncActivities, useLogManualActivity } from '../api/marathonApi';
+import { Link } from 'react-router-dom';
+import { useActivities, useSyncActivities, useLogManualActivity, useStravaStatus } from '../api/marathonApi';
 
 const ACTIVITY_TYPES = ['All', 'Run', 'Ride', 'Strength'] as const;
 type ActivityTypeFilter = (typeof ACTIVITY_TYPES)[number];
@@ -26,6 +27,7 @@ export function ActivitiesPage() {
     pageSize: 20,
   });
 
+  const stravaStatus = useStravaStatus();
   const sync = useSyncActivities();
   const logActivity = useLogManualActivity();
 
@@ -71,16 +73,27 @@ export function ActivitiesPage() {
       {/* ── Strava sync ────────────────────────────────────────────────────── */}
       <section>
         <h2>Strava sync</h2>
-        <button onClick={handleSync} disabled={sync.isPending}>
-          {sync.isPending ? 'Syncing…' : 'Sync from Strava'}
-        </button>
-        {sync.isSuccess && (
+
+        {stravaStatus.data?.isConnected === false && (
           <p>
-            Synced {sync.data.activitiesSynced} activities
-            {sync.data.activitiesSkipped > 0 && `, ${sync.data.activitiesSkipped} skipped`}.
+            Strava is not connected. <Link to="/home">Connect Strava</Link> to enable sync.
           </p>
         )}
-        {sync.isError && <p role="alert">Sync failed — check Strava is connected in Settings.</p>}
+
+        {stravaStatus.data?.isConnected && (
+          <>
+            <button onClick={handleSync} disabled={sync.isPending}>
+              {sync.isPending ? 'Syncing…' : 'Sync from Strava'}
+            </button>
+            {sync.isSuccess && (
+              <p>
+                Synced {sync.data.activitiesSynced} activities
+                {sync.data.activitiesSkipped > 0 && `, ${sync.data.activitiesSkipped} skipped`}.
+              </p>
+            )}
+            {sync.isError && <p role="alert">Sync failed — please try again.</p>}
+          </>
+        )}
       </section>
 
       {/* ── Activity list ───────────────────────────────────────────────────── */}
