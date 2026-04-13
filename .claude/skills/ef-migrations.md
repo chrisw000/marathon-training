@@ -23,7 +23,7 @@ All model configuration is in `OnModelCreating` — no EF data annotations on do
 
 ## Schema management — current state
 
-**No migrations exist yet.** In Development, `EnsureCreatedAsync` is called at startup:
+**Migrations are in use.** In Development, `EnsureCreatedAsync` is called at startup:
 
 ```csharp
 // Program.cs (Development only)
@@ -91,8 +91,7 @@ await db.Database.MigrateAsync();  // applies all pending migrations
 | Migration | Date | Purpose |
 |---|---|---|
 | `AddAthletePhysiology_20260412` | 2026-04-12 | Initial schema — creates `AthleteProfiles` (including `RestingHr`, `MaxHr`, `ThresholdHr`, `FtpWatts`, `CurrentPhase`, `LastSyncedAt`) and `StravaConnections` tables |
-
-> **Note:** This is the first (and only) migration. It creates the full schema from scratch. In Development, `EnsureCreatedAsync` still handles schema creation; the migration exists so future schema changes can be applied incrementally.
+| `AddActivityStravaFields_20260412` | 2026-04-13 | Adds Strava-specific columns to `Activities` (`StravaActivityId`, `StravaActivityType`, `HasHeartRate`, `AveragePowerWatts`, `IsDevicePower`, `AverageSpeedMetresPerSecond`, `ExternalSource`) and a filtered unique index on `StravaActivityId` |
 
 ---
 

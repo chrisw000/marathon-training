@@ -118,6 +118,9 @@ Use lowercase kebab-case in route strings.
 | GET | `/api/athlete/profile` | Required | `GetAthleteProfileQuery` — current athlete profile with HR zones, FTP, training phase |
 | PATCH | `/api/athlete/physiology` | Required | `UpdateAthletePhysiologyCommand` — update HR zones and FTP watts |
 | PATCH | `/api/athlete/phase` | Required | `UpdateTrainingPhaseCommand` — update current training phase |
+| POST | `/api/activities/sync` | Required | `SyncStravaActivitiesCommand` — incremental or full Strava sync; 422 if not connected, 429 on rate limit |
+| POST | `/api/activities/manual` | Required | `LogManualActivityCommand` — log a manual Strength activity with RPE; 201 with `{ activityId, tssScore }` |
+| GET | `/api/activities` | Required | `GetActivitiesQuery` — paginated list; optional `?type=`, `?from=`, `?to=`, `?page=`, `?pageSize=` |
 
 **Update this table when adding new endpoints.**
 
@@ -133,4 +136,4 @@ This populates the OpenAPI spec correctly.
 .WithTags("Profile")
 ```
 
-Current tags in use: `Diagnostics`, `Profile`, `Strava`.
+Current tags in use: `Diagnostics`, `Profile`, `Strava`, `Athlete`, `Training`, `Activities`.

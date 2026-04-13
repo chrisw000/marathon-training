@@ -5,3 +5,5 @@
 2026-04-12 | HEALTHY | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 52 passed, 0 failed | Coverage: unit 100% / api 100% (status endpoint now covered) / ui-vitest 100%
 2026-04-12 | AT RISK | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 103 passed, 0 failed | Coverage: unit 100% / api 80% / ui-vitest 100% / hooks 25%
 2026-04-12 | NEEDS ATTENTION | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 181 passed, 0 failed | Coverage: unit 100% / api 92% / ui-vitest 100% / hooks 100%
+2026-04-13 | NEEDS ATTENTION | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 232 passed, 0 failed | Coverage: unit 100% / api 69% / ui-vitest 100% / hooks 25%
+2026-04-12 | NEEDS ATTENTION | Build: PASS (.NET clean, UI clean, TS clean) | Tests: 247 passed, 0 failed | Coverage: unit 100% / api 88% / ui-vitest 100% / hooks 100%
